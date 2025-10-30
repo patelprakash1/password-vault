@@ -4,84 +4,37 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Password Vault</title>
-  <style>
-    body{font-family:sans-serif;background:#f8f9fa;padding:20px;text-align:center;}
-    table{margin:20px auto;border-collapse:collapse;width:80%;max-width:600px;}
-    th,td{border:1px solid #ccc;padding:8px;}
-    input,button{margin:5px;padding:8px;}
-    .hidden{display:none;}
-  </style>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-  <h1>🔐 Password Vault</h1>
-
-  <div id="login">
-    <input type="password" id="masterPass" placeholder="Master password">
-    <button onclick="unlock()">Unlock</button>
+  <!-- Login Screen -->
+  <div id="login-screen">
+    <h2>🔒 Enter Master Password</h2>
+    <input type="password" id="masterInput" placeholder="Master Password">
+    <button id="loginBtn">Access Vault</button>
+    <p id="loginError" class="error"></p>
   </div>
 
-  <div id="vault" class="hidden">
-    <table id="table">
-      <thead><tr><th>Service</th><th>User</th><th>Password</th></tr></thead>
-      <tbody></tbody>
+  <!-- Password Vault -->
+  <div id="vault" style="display:none;">
+    <h1>🔐 Password Vault</h1>
+    <table id="passwordTable">
+      <tr>
+        <th>Service</th>
+        <th>User</th>
+        <th>Password</th>
+      </tr>
+      <tr>
+        <td><input type="text" value="Sample"></td>
+        <td><input type="text" value="sample@gmail.com"></td>
+        <td><input type="text" value="Sample@121221"></td>
+      </tr>
     </table>
-    <button onclick="addRow()">Add Password</button>
-    <button onclick="save()">Save to GitHub</button>
+    <button id="addBtn">Add Password</button>
+    <button id="saveBtn">Save to GitHub</button>
   </div>
 
-  <script>
-    const username = "prakashpatel";
-    const repo = "password-vault";
-    const path = "passwords.json";
-    const masterPassword = "Urbannest@1!";
-
-    let passwords = [];
-
-    async function unlock() {
-      const input = document.getElementById("masterPass").value;
-      if (input !== masterPassword) return alert("Wrong password!");
-      document.getElementById("login").classList.add("hidden");
-      document.getElementById("vault").classList.remove("hidden");
-      const res = await fetch(`https://raw.githubusercontent.com/${username}/${repo}/main/${path}`);
-      passwords = await res.json();
-      render();
-    }
-
-    function render() {
-      const body = document.querySelector("#table tbody");
-      body.innerHTML = "";
-      passwords.forEach((p, i) => {
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td><input value="${p.name}"></td>
-          <td><input value="${p.username}"></td>
-          <td><input value="${p.password}"></td>
-        `;
-        body.appendChild(row);
-      });
-    }
-
-    function addRow() {
-      passwords.push({ name: "", username: "", password: "" });
-      render();
-    }
-
-    async function save() {
-      const rows = document.querySelectorAll("#table tbody tr");
-      passwords = Array.from(rows).map(r => ({
-        name: r.children[0].children[0].value,
-        username: r.children[1].children[0].value,
-        password: r.children[2].children[0].value
-      }));
-      const res = await fetch("/.netlify/functions/savePasswords", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ master: document.getElementById("masterPass").value, data: passwords })
-      });
-      const msg = await res.text();
-      alert(msg);
-    }
-  </script>
+  <script src="script.js"></script>
 </body>
 </html>
