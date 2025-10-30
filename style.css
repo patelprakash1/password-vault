@@ -1,0 +1,43 @@
+body {
+  font-family: Arial, sans-serif;
+  background: #f8f8f8;
+  text-align: center;
+  margin: 40px;
+}
+
+table {
+  margin: 20px auto;
+  border-collapse: collapse;
+  width: 70%;
+}
+
+th, td {
+  border: 1px solid #ccc;
+  padding: 10px;
+}
+
+input {
+  width: 95%;
+  padding: 5px;
+  text-align: center;
+}
+
+button {
+  margin: 10px;
+  padding: 10px 20px;
+  border: 1px solid #333;
+  background: white;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+button:hover {
+  background: #333;
+  color: white;
+}
+
+.error {
+  color: red;
+  font-size: 14px;
+  margin-top: 10px;
+}
