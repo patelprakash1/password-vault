@@ -1,45 +1,82 @@
-const MASTER_PASS = "Urbannest@1!"; // Local verification before calling server
+const MASTER_PASSWORD = "Urbannest@1!";
+const API_URL = "/.netlify/functions/savePasswords";
 
-document.getElementById("loginBtn").addEventListener("click", () => {
-  const inputPass = document.getElementById("masterInput").value.trim();
-  if (inputPass === MASTER_PASS) {
-    document.getElementById("login-screen").style.display = "none";
-    document.getElementById("vault").style.display = "block";
+const loginScreen = document.getElementById("login-screen");
+const vault = document.getElementById("vault");
+const masterInput = document.getElementById("masterInput");
+const loginBtn = document.getElementById("loginBtn");
+const loginError = document.getElementById("loginError");
+
+loginBtn.onclick = () => {
+  if (masterInput.value === MASTER_PASSWORD) {
+    loginScreen.style.display = "none";
+    vault.style.display = "block";
+    loadPasswords();
   } else {
-    document.getElementById("loginError").textContent = "Invalid master password!";
+    loginError.textContent = "❌ Invalid master password";
   }
-});
+};
 
-// Add new row
-document.getElementById("addBtn").addEventListener("click", () => {
-  const table = document.getElementById("passwordTable");
-  const row = table.insertRow(-1);
+const tableBody = document.querySelector("#passwordTable tbody");
+const addBtn = document.getElementById("addBtn");
+const saveBtn = document.getElementById("saveBtn");
+const status = document.getElementById("status");
+
+addBtn.onclick = () => {
+  const row = document.createElement("tr");
   row.innerHTML = `
-    <td><input type="text" placeholder="Service"></td>
-    <td><input type="text" placeholder="User"></td>
-    <td><input type="text" placeholder="Password"></td>
+    <td><input placeholder="Service"></td>
+    <td><input placeholder="Username"></td>
+    <td><input placeholder="Password"></td>
+    <td><button class="remove">🗑️</button></td>
   `;
-});
+  tableBody.appendChild(row);
+  row.querySelector(".remove").onclick = () => row.remove();
+};
 
-// Save to GitHub
-document.getElementById("saveBtn").addEventListener("click", async () => {
-  const table = document.querySelector("#passwordTable");
-  const rows = Array.from(table.querySelectorAll("tr")).slice(1);
-  const passwords = rows.map(row => {
-    const inputs = row.querySelectorAll("input");
-    return {
-      service: inputs[0].value,
-      user: inputs[1].value,
-      password: inputs[2].value
-    };
-  });
+saveBtn.onclick = async () => {
+  const rows = Array.from(tableBody.querySelectorAll("tr"));
+  const passwords = rows.map(r => {
+    const inputs = r.querySelectorAll("input");
+    return { service: inputs[0].value, user: inputs[1].value, password: inputs[2].value };
+  }).filter(p => p.service && p.user && p.password);
 
-  const res = await fetch("/.netlify/functions/savePasswords", {
+  if (passwords.length === 0) {
+    status.textContent = "⚠️ Please add at least one password.";
+    return;
+  }
+
+  status.textContent = "⏳ Saving...";
+
+  const res = await fetch(API_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ master: MASTER_PASS, data: passwords }),
+    body: JSON.stringify({ master: MASTER_PASSWORD, data: passwords })
   });
 
   const text = await res.text();
-  alert(text);
-});
+  status.textContent = text.includes("Saved") ? "✅ " + text : "❌ " + text;
+};
+
+async function loadPasswords() {
+  try {
+    const res = await fetch("https://raw.githubusercontent.com/patelprakash1/password-vault/main/passwords.json");
+    if (res.ok) {
+      const data = await res.json();
+      tableBody.innerHTML = "";
+      data.forEach(p => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td><input value="${p.service}"></td>
+          <td><input value="${p.user}"></td>
+          <td><input value="${p.password}"></td>
+          <td><button class="remove">🗑️</button></td>
+        `;
+        row.querySelector(".remove").onclick = () => row.remove();
+        tableBody.appendChild(row);
+      });
+    }
+  } catch {
+    console.log("No existing passwords found.");
+  }
+}
