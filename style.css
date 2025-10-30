@@ -1,43 +1,43 @@
 body {
   font-family: Arial, sans-serif;
-  background: #f8f8f8;
+  background: #f5f7fb;
+  padding: 30px;
   text-align: center;
-  margin: 40px;
 }
 
 table {
   margin: 20px auto;
   border-collapse: collapse;
-  width: 70%;
+  width: 80%;
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
 }
 
 th, td {
-  border: 1px solid #ccc;
   padding: 10px;
+  border: 1px solid #ddd;
 }
 
 input {
-  width: 95%;
-  padding: 5px;
-  text-align: center;
+  padding: 8px;
+  margin: 5px;
 }
 
 button {
-  margin: 10px;
-  padding: 10px 20px;
-  border: 1px solid #333;
-  background: white;
+  background: #0078d7;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 5px;
   cursor: pointer;
-  border-radius: 6px;
 }
 
 button:hover {
-  background: #333;
-  color: white;
+  background: #005fa3;
 }
 
-.error {
-  color: red;
-  font-size: 14px;
-  margin-top: 10px;
+#login-screen {
+  max-width: 400px;
+  margin: auto;
 }
