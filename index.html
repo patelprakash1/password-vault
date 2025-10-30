@@ -5,159 +5,83 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Password Vault</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f8f9fa;
-      padding: 20px;
-      color: #333;
-      text-align: center;
-    }
-    h1 { color: #111; }
-    input, button {
-      padding: 10px;
-      margin: 5px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-    }
-    table {
-      margin: 20px auto;
-      border-collapse: collapse;
-      width: 80%;
-      max-width: 600px;
-    }
-    th, td {
-      padding: 10px;
-      border: 1px solid #ccc;
-    }
-    .hidden { display: none; }
-    .edit-controls { margin-top: 20px; }
+    body{font-family:sans-serif;background:#f8f9fa;padding:20px;text-align:center;}
+    table{margin:20px auto;border-collapse:collapse;width:80%;max-width:600px;}
+    th,td{border:1px solid #ccc;padding:8px;}
+    input,button{margin:5px;padding:8px;}
+    .hidden{display:none;}
   </style>
 </head>
 <body>
 
   <h1>🔐 Password Vault</h1>
 
-  <div id="login-section">
-    <input type="password" id="masterPass" placeholder="Enter master password" />
-    <button onclick="unlockVault()">Unlock</button>
+  <div id="login">
+    <input type="password" id="masterPass" placeholder="Master password">
+    <button onclick="unlock()">Unlock</button>
   </div>
 
-  <div id="vault-section" class="hidden">
-    <table id="passwordTable">
-      <thead>
-        <tr><th>Service</th><th>Username</th><th>Password</th></tr>
-      </thead>
+  <div id="vault" class="hidden">
+    <table id="table">
+      <thead><tr><th>Service</th><th>User</th><th>Password</th></tr></thead>
       <tbody></tbody>
     </table>
-
-    <button id="editModeBtn" onclick="toggleEditMode()">Edit Mode</button>
-
-    <div id="edit-section" class="hidden">
-      <h3>Edit Mode</h3>
-      <input type="text" id="token" placeholder="Enter GitHub Token" /><br>
-      <button onclick="loadPasswords()">Load Data</button>
-      <button onclick="addPassword()">Add Password</button>
-      <button onclick="savePasswords()">Save to GitHub</button>
-    </div>
+    <button onclick="addRow()">Add Password</button>
+    <button onclick="save()">Save to GitHub</button>
   </div>
 
   <script>
     const username = "prakashpatel";
-const repo = "password-vault";
-const path = "passwords.json";
-const masterPassword = "Urbannest@1!"; // 🔑 set your master password here
+    const repo = "password-vault";
+    const path = "passwords.json";
+    const masterPassword = "Urbannest@1!";
 
     let passwords = [];
-    let editMode = false;
 
-    async function unlockVault() {
+    async function unlock() {
       const input = document.getElementById("masterPass").value;
-      if (input === masterPassword) {
-        document.getElementById("login-section").classList.add("hidden");
-        document.getElementById("vault-section").classList.remove("hidden");
-        await loadPasswords();
-      } else {
-        alert("Wrong password!");
-      }
-    }
-
-    async function loadPasswords() {
-      const url = `https://raw.githubusercontent.com/${username}/${repo}/main/${path}`;
-      const res = await fetch(url);
+      if (input !== masterPassword) return alert("Wrong password!");
+      document.getElementById("login").classList.add("hidden");
+      document.getElementById("vault").classList.remove("hidden");
+      const res = await fetch(`https://raw.githubusercontent.com/${username}/${repo}/main/${path}`);
       passwords = await res.json();
-      renderTable();
+      render();
     }
 
-    function renderTable() {
-      const tbody = document.querySelector("#passwordTable tbody");
-      tbody.innerHTML = "";
+    function render() {
+      const body = document.querySelector("#table tbody");
+      body.innerHTML = "";
       passwords.forEach((p, i) => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${p.name}</td>
-          <td>${p.username}</td>
-          <td>
-            <input type="text" value="${p.password}" readonly style="border:none; background:none;" id="pass-${i}">
-            <button onclick="copyPass(${i})">Copy</button>
-            ${editMode ? `<button onclick="deletePassword(${i})">🗑️</button>` : ""}
-          </td>
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td><input value="${p.name}"></td>
+          <td><input value="${p.username}"></td>
+          <td><input value="${p.password}"></td>
         `;
-        tbody.appendChild(tr);
+        body.appendChild(row);
       });
     }
 
-    function copyPass(i) {
-      const input = document.getElementById(`pass-${i}`);
-      input.select();
-      document.execCommand("copy");
-      alert("Copied!");
+    function addRow() {
+      passwords.push({ name: "", username: "", password: "" });
+      render();
     }
 
-    function toggleEditMode() {
-      editMode = !editMode;
-      document.getElementById("edit-section").classList.toggle("hidden");
-      renderTable();
-    }
-
-    function addPassword() {
-      const name = prompt("Service name?");
-      const username = prompt("Username?");
-      const password = prompt("Password?");
-      if (name && username && password) {
-        passwords.push({ name, username, password });
-        renderTable();
-      }
-    }
-
-    async function savePasswords() {
-      const token = document.getElementById("token").value;
-      if (!token) return alert("Please enter GitHub token");
-
-      const url = `https://api.github.com/repos/${username}/${repo}/contents/${path}`;
-      const getRes = await fetch(url, { headers: { Authorization: `token ${token}` } });
-      const file = await getRes.json();
-      const sha = file.sha;
-
-      const res = await fetch(url, {
-        method: "PUT",
-        headers: {
-          Authorization: `token ${token}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          message: "Updated passwords",
-          content: btoa(unescape(encodeURIComponent(JSON.stringify(passwords, null, 2)))),
-          sha
-        })
+    async function save() {
+      const rows = document.querySelectorAll("#table tbody tr");
+      passwords = Array.from(rows).map(r => ({
+        name: r.children[0].children[0].value,
+        username: r.children[1].children[0].value,
+        password: r.children[2].children[0].value
+      }));
+      const res = await fetch("/.netlify/functions/savePasswords", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ master: document.getElementById("masterPass").value, data: passwords })
       });
-
-      if (res.ok) {
-        alert("Passwords saved to GitHub!");
-      } else {
-        alert("Failed to save. Check token or permissions.");
-      }
+      const msg = await res.text();
+      alert(msg);
     }
   </script>
-
 </body>
 </html>
